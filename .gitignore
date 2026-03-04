@@ -9,6 +9,7 @@ __pycache__/
 # Test reports
 reports/
 *.log
+*.html
 
 # Editors
 .vscode/
@@ -17,3 +18,9 @@ reports/
 *.swp
 *.swo
 *~
+
+# Pytest cache
+.pytest_cache/
+
+# Coverage reports
+reports/
