@@ -24,3 +24,10 @@ reports/
 
 # Coverage reports
 reports/
+
+# Screenshots (debug or manual)
+*.png
+*.jpg
+*.jpeg
+debug_*.png
+screenshot*.png
