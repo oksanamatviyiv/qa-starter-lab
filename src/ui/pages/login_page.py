@@ -1,4 +1,5 @@
-from playwright.sync_api import expect
+from playwright.sync_api import expect  # type: ignore[import-not-found]
+
 from .base_page import BasePage
 
 
@@ -9,22 +10,24 @@ class LoginPage(BasePage):
     USERNAME = "#username"
     PASSWORD = "#password"
     LOGIN_BTN = "button[type='submit']"
-    FLASH = "#flash"
 
     def open_login(self):
-        self.open(self.URL)
+        # Avoid waiting on the demo site's external tracking script.
+        self.page.route("**/js/vendor/298279967.js", lambda route: route.abort())
+        self.page.goto(
+        self.URL, wait_until="domcontentloaded", timeout=60_000
+        )
 
     def login(self, username: str, password: str):
         self.page.locator(self.USERNAME).fill(username)
         self.page.locator(self.PASSWORD).fill(password)
-        self.page.locator(self.LOGIN_BTN).click()
+        with self.page.expect_navigation(wait_until="commit", timeout=60_000):
+            self.page.locator(self.LOGIN_BTN).click(no_wait_after=True)
 
     def assert_success_message(self):
-        expect(self.page.locator(self.FLASH)).to_contain_text(
-            "You logged into a secure area!"
-        )
+        expect(self.page).to_have_url("https://the-internet.herokuapp.com/secure")
 
     def assert_invalid_password(self):
-        expect(self.page.locator(self.FLASH)).to_contain_text(
+        expect(self.page.locator("#flash")).to_contain_text(
             "Your password is invalid!"
         )

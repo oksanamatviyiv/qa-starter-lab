@@ -1,134 +1,112 @@
 # QA Starter Lab
 
-A modern test automation framework using Pytest for both API and UI testing with Playwright.
+A small test automation project using Pytest for API tests and Playwright for UI
+tests. The tests use the public JSONPlaceholder API and The Internet demo site,
+so running them requires internet access and depends on those services being
+available.
 
 ## Project Structure
 
-```
+```text
 qa-starter-lab/
 ├── src/
-│   ├── api/           # API client and utilities
-│   │   └── client.py
-│   └── ui/
-│       └── pages/     # Page Object Models for UI tests
+│   ├── api/
+│   │   └── client.py          # Requests-based API client
+│   └── ui/pages/
+│       ├── base_page.py       # Shared Playwright page behavior
+│       └── login_page.py      # Login page object
 ├── tests/
-│   ├── api/           # API test cases
-│   ├── ui/            # UI test cases (Playwright)
-│   └── conftest.py    # Pytest fixtures and hooks
-├── config.py          # Configuration (base URLs, timeouts, etc.)
-├── pytest.ini         # Pytest configuration with markers
-├── requirements.txt   # Python dependencies
-└── reports/           # Generated test reports (HTML, XML)
+│   ├── api/                   # API tests
+│   ├── ui/                    # Browser UI tests
+│   └── conftest.py            # Shared fixtures and failure-report hook
+├── config.py                  # Service URLs and API request timeout
+├── pytest.ini                 # Test discovery, markers, and report options
+├── requirements.txt           # Python dependencies
+└── .gitignore                 # Excludes local and generated files
 ```
 
-## Setup Instructions
+Pytest creates `reports/report.html` and `reports/report.xml` when tests run.
+These generated reports are ignored by Git.
 
-### 1. Create and Activate Virtual Environment
+## Setup
+
+Create and activate a virtual environment, then install the project
+dependencies and Chromium:
+
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
+python -m pip install -r requirements.txt
+playwright install chromium
 ```
 
-### 2. Install Dependencies
-```bash
-pip install -r requirements.txt
-playwright install  # Install browser binaries for Playwright
-```
+On Windows, activate the environment with `.venv\Scripts\activate` instead.
 
-### 3. Verify Installation
+Check the installation:
+
 ```bash
-pytest --version
+python -m pytest --version
 playwright --version
 ```
 
 ## Running Tests
 
-### Run All Tests
+Run the full suite (HTML and JUnit XML reports are enabled in `pytest.ini`):
+
 ```bash
 pytest
 ```
 
-### Run Tests by Marker
+Run API or smoke tests by marker:
+
 ```bash
-# API tests only
 pytest -m api
-
-# UI tests only
-pytest -m ui
-
-# Smoke tests
 pytest -m smoke
 ```
 
-### Run with HTML Report
-```bash
-pytest --html=reports/report.html --self-contained-html
-```
+Run the UI tests by file:
 
-### Run with Verbose Output
 ```bash
-pytest -v
-```
-
-### Run Specific Test File
-```bash
-pytest tests/api/test_health.py
 pytest tests/ui/test_login_ui.py
 ```
 
-## Framework Features
+The `ui` marker is registered in `pytest.ini`, but the current UI tests are not
+tagged with it, so use the file path rather than `pytest -m ui`.
 
-### API Testing
-- **Client**: `src/api/client.py` provides an HTTP client wrapper using `requests`
-- **Tests**: Located in `tests/api/`
-- **Base URL**: Configured in `config.py` (JSONPlaceholder by default)
+Useful options:
 
-### UI Testing
-- **Framework**: Playwright (sync API)
-- **Pattern**: Page Object Model (POM) for maintainability
-- **Pages**: UI page classes in `src/ui/pages/`
-- **Features**:
-  - Screenshots on test failure (auto-embedded in HTML report)
-  - Configurable headless/headed mode via `HEADLESS` env var
-  - Customizable viewport and timeouts
-
-### Fixtures (conftest.py)
-- `api_client`: Session-scoped API client
-- `browser`: Session-scoped Playwright browser instance
-- `page`: Browser page context with viewport settings
-- `pytest_runtest_makereport`: Hook to capture screenshots on failure
-
-### Configuration (config.py)
-- `API_BASE_URL`: API testing endpoint
-- `UI_BASE_URL`: Web application under test
-- `DEFAULT_TIMEOUT`: Default wait timeout for tests
-
-## Markers
-
-Tests are organized using pytest markers:
 ```bash
-@pytest.mark.api      # API tests
-@pytest.mark.ui       # UI tests
-@pytest.mark.smoke    # Smoke/critical path tests
+pytest -v
+pytest tests/api/test_health.py
+pytest --html=reports/report.html --self-contained-html
 ```
 
-## Environment Variables
+## Configuration
 
-- `HEADLESS=0`: Run browser in headed mode (default: headless)
-- `UI_BASE_URL`: Override base URL for UI tests
-- `API_BASE_URL`: Override base URL for API tests
+Edit `config.py` to change:
 
-Example:
+- `API_BASE_URL`: API test service URL (JSONPlaceholder by default).
+- `UI_BASE_URL`: UI test site base URL (The Internet by default).
+- `DEFAULT_TIMEOUT`: timeout, in seconds, for API requests.
+
+The UI browser fixture launches Chromium headlessly by default. Set
+`HEADLESS=0` to run it in headed mode:
+
 ```bash
-HEADLESS=0 pytest tests/ui/test_login_ui.py -v -s
+HEADLESS=0 pytest tests/ui/test_login_ui.py
 ```
 
-## Implementation Status
+`API_BASE_URL` and `UI_BASE_URL` are Python constants, not environment-variable
+overrides.
 
-- ✅ API test framework with client and fixtures
-- ✅ UI test framework using Playwright with POM
-- ✅ Automated screenshot capture on test failures
-- ✅ HTML and XML report generation
-- ✅ Pytest markers and fixture organization
-- ✅ Configuration management
-- ✅ Virtual environment setup
+## Test Framework
+
+- `api_client` is a session-scoped fixture that uses the configured API URL and
+  request timeout.
+- `browser` is a session-scoped Chromium instance.
+- `page` creates a fresh browser context and page for each test, with a
+  1280 x 720 viewport and the configured UI base URL.
+- UI page objects live in `src/ui/pages/`.
+- On a failed test call, `tests/conftest.py` attempts to attach a screenshot to
+  the HTML report. If capture fails, pytest emits a warning.
+- Pytest markers `api`, `ui`, and `smoke` are registered in `pytest.ini`.

@@ -1,10 +1,11 @@
 import os  # for environment variable handling
-import pathlib  # for file path handling
-import pytest, pytest_html  # for embedding screenshots in test reports
+import importlib
+
+import pytest  # type: ignore[import-not-found]
+from playwright.sync_api import sync_playwright  # type: ignore[import-not-found]
 
 from config import API_BASE_URL, UI_BASE_URL, DEFAULT_TIMEOUT
 from src.api.client import APIClient
-from playwright.sync_api import sync_playwright
 
 
 # ---------- API fixture ----------
@@ -50,8 +51,12 @@ def pytest_runtest_makereport(item, call):
             try:
                 png = page.screenshot()
                 extra = getattr(rep, "extra", [])
+                pytest_html = importlib.import_module("pytest_html")
                 extra.append(pytest_html.extras.png(png))
                 rep.extra = extra
             except Exception as e:
-                # Silent fail if screenshot can't be taken
-                pass
+                item.warn(
+                    pytest.PytestWarning(
+                        f"Could not capture failure screenshot: {e}"
+                    )
+                )

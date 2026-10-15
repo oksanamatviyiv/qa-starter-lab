@@ -1,9 +1,6 @@
-import pytest
 from src.ui.pages.login_page import LoginPage
 
 
-@pytest.mark.ui
-@pytest.mark.smoke
 def test_login_success(page):
     login = LoginPage(page)
     login.open_login()
@@ -11,7 +8,6 @@ def test_login_success(page):
     login.assert_success_message()
 
 
-@pytest.mark.ui
 def test_login_invalid_password(page):
     login = LoginPage(page)
     login.open_login()
