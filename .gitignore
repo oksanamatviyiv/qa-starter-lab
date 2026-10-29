@@ -39,3 +39,7 @@ blob-report/
 screenshots/
 debug_*.png
 screenshot*.png
+
+# Local API credentials and tokens
+*.secret
+*.secrets.json
